@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application for Credit - Royce Group System</title>
+    
+    <!-- PWA Meta Tags & Manifest Registration -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#1d4ed8">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5968/5968280.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .page-break { page-break-after: always; break-after: page; }
+        }
+        .pdf-page {
+            width: 8.5in;
+            min-height: 11in;
+            padding: 0.4in;
+            background: white;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            color: #000;
+            line-height: 1.2;
+        }
+        .pdf-line-input {
+            border-bottom: 1px solid #000;
+            display: inline-block;
+            min-height: 14px;
+            padding-left: 4px;
+        }
+        .pdf-table, .pdf-table th, .pdf-table td {
+            border: 1px solid #000;
+            border-collapse: collapse;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-gray-100">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-blue-700">Royce</h2>
+                <p class="text-xs text-gray-500 mt-1">Credit Application Portal</p>
+            </div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Username</label>
+                    <input type="text" id="loginUsername" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required placeholder="Enter username">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Password</label>
+                    <input type="password" id="loginPassword" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" required placeholder="••••••••">
+                </div>
+                <p id="loginError" class="text-red-500 text-xs hidden">Invalid username or password!</p>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg hover:bg-blue-700 font-semibold text-sm transition">Login</button>
+            </form>
+
+            <div class="text-xs text-gray-500 mt-6 border-t pt-4 space-y-1 bg-gray-50 p-3 rounded-lg">
+                <p class="font-bold text-gray-700 mb-1">Enter your Username and Password</p>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="mainDashboard" class="hidden min-h-screen flex flex-col">
+        <nav class="bg-blue-700 text-white p-4 flex justify-between items-center shadow-md no-print">
+            <div>
+                <h1 class="text-xl font-bold" id="navTitle">Sales & Agent Management</h1>
+                <p class="text-xs text-blue-100" id="userBadge"></p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleChangePasswordModal()" class="bg-blue-800 hover:bg-blue-900 px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition flex items-center gap-1 border border-blue-400">
+                    🔒 Change Password
+                </button>
+                <button onclick="handleLogout()" class="bg-red-500 px-4 py-1.5 rounded-lg hover:bg-red-600 text-xs font-semibold shadow transition">Logout</button>
+            </div>
+        </nav>
+
+        <div class="p-6 max-w-7xl mx-auto w-full flex-grow space-y-6">
+
+            <!-- ADMIN SECTION -->
+            <div id="adminUserSection" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hidden no-print">
+                <h2 class="text-base font-bold mb-4 border-b pb-2 text-gray-700">Create System User (Sales / Agent)</h2>
+                <form id="createUserForm" onsubmit="createUser(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+                        <input type="text" id="newFullName" class="w-full p-2 border rounded-lg text-sm" required placeholder="Name">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Username</label>
+                        <input type="text" id="newUsername" class="w-full p-2 border rounded-lg text-sm" required placeholder="username">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Role</label>
+                        <div class="flex gap-4 p-2 border rounded-lg text-sm bg-white">
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="newRole" value="Agent" checked> Agent</label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="newRole" value="Sales"> Sales</label>
+                        </div>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-emerald-600 text-white p-2 rounded-lg hover:bg-emerald-700 text-sm font-semibold transition">Create Staff Account</button>
+                    </div>
+                </form>
+
+                <div class="mt-6">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Active Staff Accounts (Firebase Synced)</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 border-b text-xs text-gray-500">
+                                    <th class="p-2">Name</th>
+                                    <th class="p-2">Username</th>
+                                    <th class="p-2">Role</th>
+                                    <th class="p-2 text-center">Source</th>
+                                    <th class="p-2 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AGENT SECTION -->
+            <div id="agentCustomerAccountSection" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hidden no-print">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-3 mb-4 gap-2">
+                    <div>
+                        <h2 class="text-base font-bold text-gray-700">Create Customer Account</h2>
+                        <p class="text-xs text-gray-500">Register customers & share link for online submission</p>
+                    </div>
+                    <button onclick="copySystemLink()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow transition">
+                        📋 Copy System Link for Customer
+                    </button>
+                </div>
+
+                <form id="createCustomerForm" onsubmit="createCustomerAccount(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Customer Full Name</label>
+                        <input type="text" id="custFullName" class="w-full p-2 border rounded-lg text-sm" required placeholder="Pedro Penduko">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Assign Username</label>
+                        <input type="text" id="custUsername" class="w-full p-2 border rounded-lg text-sm" required placeholder="pedro_customer">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Default Password</label>
+                        <input type="text" id="custPassword" class="w-full p-2 border rounded-lg text-sm" value="1234" required>
+                    </div>
+                    <div class="md:col-span-3 flex justify-end">
+                        <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition">Create Customer Account</button>
+                    </div>
+                </form>
+
+                <div class="mt-6">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">My Registered Customer Accounts</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 border-b text-xs text-gray-500">
+                                    <th class="p-2">Customer Full Name</th>
+                                    <th class="p-2">Username</th>
+                                    <th class="p-2">Assigned Agent (You)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customerTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CUSTOMER SECTION: APPLICATION FORM -->
+            <div id="customerApplicationSection" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hidden no-print">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-800">Application for Credit Form</h2>
+                <form id="customerSubmitAppForm" onsubmit="submitCustomerApplication(event)" class="space-y-6 text-xs">
+                    
+                    <div>
+                        <h3 class="font-bold text-blue-700 uppercase mb-2">Unit & Applicant Details</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block font-semibold mb-1">Unit Applied For</label>
+                                <input type="text" id="f_unit" class="w-full p-2 border rounded" required placeholder="e.g. Honda Click 125i">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Unit Condition</label>
+                                <div class="flex gap-4 p-2 border rounded bg-white">
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold"><input type="radio" name="f_unitCondition" value="Brand New" checked> Brand New</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold"><input type="radio" name="f_unitCondition" value="Repo"> Repo (Repossessed)</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Term (Months)</label>
+                                <input type="text" id="f_term" class="w-full p-2 border rounded" required placeholder="e.g. 12, 24 or 36 Months">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Down Payment (₱)</label>
+                                <input type="number" id="f_downPayment" class="w-full p-2 border rounded" placeholder="₱0.00">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block font-semibold mb-1">Customer's Full Name (First, Middle, Last)</label>
+                                <input type="text" id="f_customerName" class="w-full p-2 border rounded" required placeholder="Full Name">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-blue-700 uppercase mb-2">Address & Personal Info</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="md:col-span-2">
+                                <label class="block font-semibold mb-1">PRESENT ADDRESS (ex. Purok 1 San Leonardo, Bambang, Nueva Vizcaya)</label>
+                                <input type="text" id="f_presentAddress" class="w-full p-2 border rounded shadow-sm focus:ring-2 focus:ring-blue-500" required placeholder="Complete Address (ex. Purok 1 San Leonardo, Bambang, Nueva Vizcaya)">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block font-semibold mb-1">Cellphone Number</label>
+                                <input type="tel" id="f_cellphoneNo" class="w-full p-2 border rounded" required placeholder="e.g. 09123456789">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Length of Stay (Since Birth ang ilagay kung dito ka na Pinanganak at Lumaki at kung hindi naman ilagay kung ilang taon ka na nakatira sa Present Address mo)</label>
+                                <input type="text" id="f_lengthOfStay" class="w-full p-2 border rounded">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Previous Address (Ilagay dito ang dating Address mo (Kung Meron) bago ka lumipat sa Present Address mo ngayon)</label>
+                                <input type="text" id="f_previousAddress" class="w-full p-2 border rounded">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">House (Owned kung sayo yung bahay, Rented kung nagrerenta, FreeUse kung nakikitira)</label>
+                                <div class="flex flex-wrap gap-3 p-2 border rounded bg-white">
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold"><input type="radio" name="f_houseOwnership" value="Owned" checked> Owned</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold"><input type="radio" name="f_houseOwnership" value="Rented"> Rented</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold"><input type="radio" name="f_houseOwnership" value="Free Use"> Free Use</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Monthly Rent (If rented)</label>
+                                <input type="text" id="f_moRent" class="w-full p-2 border rounded" placeholder="₱0.00">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Date of Birth</label>
+                                <input type="text" id="f_dob" class="w-full p-2 border rounded" placeholder="e.g. MM/DD/YYYY or Jan 1, 1990">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Place of Birth (Purok 1 San Leonardo, Bambang, Nueva Vizcaya)</label>
+                                <input type="text" id="f_pob" class="w-full p-2 border rounded">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block font-semibold mb-1">Civil Status</label>
+                                <div class="flex gap-4 p-2 border rounded bg-white font-semibold">
+                                    <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="f_civilStatus" value="Single" checked onchange="toggleSpouseFields()"> Single</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="f_civilStatus" value="Married" onchange="toggleSpouseFields()"> Married</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SPOUSE DETAILS SECTION -->
+                        <div id="spouseDetailsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 hidden">
+                            <div>
+                                <label class="block font-semibold mb-1">Spouse Name (Buong pangalan ng ASAWA)</label>
+                                <input type="text" id="f_spouseName" class="w-full p-2 border rounded">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Spouse Date of Birth (Birthday ng Asawa)</label>
+                                <input type="text" id="f_spouseDob" class="w-full p-2 border rounded">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block font-semibold mb-1">Spouse Place of Birth (Saan Pinanganak ang Asawa)</label>
+                                <input type="text" id="f_spousePob" class="w-full p-2 border rounded">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                            <div class="md:col-span-2">
+                                <label class="block font-semibold mb-1">Nearest Relative not living with buyer (Pinakamalapit na kamag-anak mo sa address mo ngayon)</label>
+                                <input type="text" id="f_nearestRelative" class="w-full p-2 border rounded">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Relative Address</label>
+                                <input type="text" id="f_relativeAddress" class="w-full p-2 border rounded">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1">Relationship</label>
+                                <input type="text" id="f_relativeRelationship" class="w-full p-2 border rounded">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DEPENDENTS -->
+                    <div>
+                        <h3 class="font-bold text-blue-700 uppercase mb-2">Dependents (Anak)</h3>
+                        <div class="mb-3 max-w-xs">
+                            <label class="block font-semibold mb-1 text-gray-700">Number of Dependents (Ilagay kung ilan ang Anak mo)</label>
+                            <input type="number" id="f_childCount" value="0" min="0" max="10" onchange="generateChildrenFields()" onkeyup="generateChildrenFields()" class="w-full p-2 border rounded font-bold text-blue-700">
+                        </div>
+                        <div id="childrenFieldsContainer" class="space-y-3"></div>
+                    </div>
+
+                    <!-- SOURCE OF INCOME -->
+                    <div>
+                        <h3 class="font-bold text-blue-700 uppercase mb-2">Source of Income</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <label class="block font-bold text-blue-900 mb-2 text-xs">Buyer Employment Status:</label>
+                                <div class="flex flex-wrap gap-3 bg-white p-2 border rounded">
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold text-gray-800"><input type="radio" name="f_buyerEmploymentType" value="Employed" checked onchange="toggleIncomeFields()"> Employed</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold text-gray-800"><input type="radio" name="f_buyerEmploymentType" value="Self-Employed" onchange="toggleIncomeFields()"> Self-Employed</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold text-gray-800"><input type="radio" name="f_buyerEmploymentType" value="None" onchange="toggleIncomeFields()"> None</label>
+                                </div>
+                            </div>
+                            <div id="spouseEmploymentCard" class="bg-purple-50 p-3 rounded-lg border border-purple-100 hidden">
+                                <label class="block font-bold text-purple-900 mb-2 text-xs">Spouse/Asawa Employment Status:</label>
+                                <div class="flex flex-wrap gap-3 bg-white p-2 border rounded">
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold text-gray-800"><input type="radio" name="f_spouseEmploymentType" value="Employed" onchange="toggleIncomeFields()"> Employed</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold text-gray-800"><input type="radio" name="f_spouseEmploymentType" value="Self-Employed" onchange="toggleIncomeFields()"> Self-Employed</label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer font-semibold text-gray-800"><input type="radio" name="f_spouseEmploymentType" value="None" checked onchange="toggleIncomeFields()"> None</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="buyerFieldsContainer" class="p-4 border rounded-xl bg-gray-50/50 mb-4">
+                            <h4 class="font-bold text-gray-700 text-xs uppercase mb-3 border-b pb-1">Buyer Income Details</h4>
+                            <div id="buyerEmployedFields" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div><label class="block font-semibold mb-1">Employer</label><input type="text" id="f_empBuyer" class="w-full p-2 border rounded bg-white"></div>
+                                <div><label class="block font-semibold mb-1">Employer's Address</label><input type="text" id="f_empBuyerAddress" class="w-full p-2 border rounded bg-white"></div>
+                                <div><label class="block font-semibold mb-1">Position</label><input type="text" id="f_posBuyer" class="w-full p-2 border rounded bg-white"></div>
+                                <div><label class="block font-semibold mb-1">Monthly Salary (₱)</label><input type="number" id="f_salaryBuyer" oninput="calculateTotalIncome()" class="w-full p-2 border rounded bg-white"></div>
+                                <div><label class="block font-semibold mb-1">Length of Employment</label><input type="text" id="f_lengthEmpBuyer" class="w-full p-2 border rounded bg-white"></div>
+                                <div><label class="block font-semibold mb-1">Other Compensation(Optional) (₱)</label><input type="number" id="f_otherComp" oninput="calculateTotalIncome()" class="w-full p-2 border rounded bg-white"></div>
+                            </div>
+                            <div id="buyerSelfEmployedFields" class="grid grid-cols-1 md:grid-cols-2 gap-3 hidden">
+                                <div><label class="block font-semibold mb-1">Business Source</label><input type="text" id="f_selfEmpBuyer" class="w-full p-2 border rounded bg-white"></div>
+                                <div><label class="block font-semibold mb-1">Monthly Income (₱)</label><input type="number" id="f_incomeSelfEmpBuyer" oninput="calculateTotalIncome()" class="w-full p-2 border rounded bg-white"></div>
+                            </div>
+                            <div id="buyerNoneFields" class="hidden text-gray-500 italic p-2 text-xs">Walang sariling pagkakakitaan ang Buyer.</div>
+                        </div>
+
+                        <div id="spouseFieldsContainer" class="p-4 border rounded-xl bg-gray-50/50 mb-4 hidden">
+                            <h4 class="font-bold text-gray-700 text-xs uppercase mb-3 border-b pb-1">Spouse/Asawa Income Details</h4>
+                            <div id="spouseEmployedFields" class="grid grid-cols-1 md:grid-cols-2 gap-3 hidden">
+                                <div><label class="block font-semibold mb-1">Spouse/Asawa Employer</label><input type="text" id="f_empSpouse" class="w-full p-2 border rounded bg-white"></div>
+                                <div><label class="block font-semibold mb-1">Address</label><input type="text" id="f_empSpouseAddress" class="w-full p-2 border rounded bg-white"></div>
+                                <div><label class="block font-semibold mb-1">Position</label><input type="text" id="f_posSpouse" class="w-full p-2 border rounded bg-white"></div>
+                                <div><label class="block font-semibold mb-1">Monthly Salary (₱)</label><input type="number" id="f_salarySpouse" oninput="calculateTotalIncome()" class="w-full p-2 border rounded bg-white"></div>
+                            </div>
+                            <div id="spouseSelfEmployedFields" class="grid grid-cols-1 md:grid-cols-2 gap-3 hidden">
+                                <div><label class="block font-semibold mb-1">Business Source</label><input type="text" id="f_selfEmpSpouse" class="w-full p-2 border rounded bg-white"></div>
+                                <div><label class="block font-semibold mb-1">Monthly Income (₱)</label><input type="number" id="f_incomeSelfEmpSpouse" oninput="calculateTotalIncome()" class="w-full p-2 border rounded bg-white"></div>
+                            </div>
+                            <div id="spouseNoneFields" class="text-gray-500 italic p-2 text-xs">Walang trabaho ang asawa.</div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="block font-semibold mb-1">Estimated Total Monthly Household Income (₱)</label>
+                            <input type="number" id="f_estTotalIncome" class="w-full p-2 border rounded font-bold bg-gray-100 text-blue-700" readonly>
+                        </div>
+                    </div>
+
+                    <!-- PROPERTIES & REFERENCES -->
+                    <div>
+                        <h3 class="font-bold text-blue-700 uppercase mb-2">Properties & References</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                            <div><label class="block font-semibold mb-1">Real Property Details (Ilagay ang "House and Lot" dito kung may nakapangalan sayo na titulo ng Bahay or Lupa)</label><input type="text" id="f_realProp" class="w-full p-2 border rounded"></div>
+                            <div><label class="block font-semibold mb-1">Personal Property Details (Ilagay dito kung nakapangalan sayo na Motor or Sasakyan, Ilagay ang Brand at Pangalan ng Unit (ex. Honda Click 125).)</label><input type="text" id="f_personalProp" class="w-full p-2 border rounded"></div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block font-bold text-gray-700">References</label>
+                            <div class="p-2 border rounded bg-gray-50 flex gap-2"><input type="text" id="f_ref1_name" placeholder="Barangay Captain Name" class="w-full p-1 border rounded bg-white"></div>
+                            <div class="p-2 border rounded bg-gray-50 flex gap-2"><input type="text" id="f_ref2_name" placeholder="Barangay Kagawad 1 Name" class="w-full p-1 border rounded bg-white"></div>
+                            <div class="p-2 border rounded bg-gray-50 flex gap-2"><input type="text" id="f_ref3_name" placeholder="Barangay Kagawad 2 Name" class="w-full p-1 border rounded bg-white"></div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-4 border-t">
+                        <button type="submit" class="bg-emerald-600 text-white px-8 py-3 rounded-lg text-sm font-bold hover:bg-emerald-700 transition shadow-lg">
+                            Submit Credit Application
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- APPLICATIONS TABLE -->
+            <div id="applicationsTableSection" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 no-print">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 border-b pb-3 gap-4">
+                    <div>
+                        <h2 class="text-base font-bold text-gray-800">Applications List</h2>
+                        <p class="text-xs text-gray-500">Overview of submitted credit applications</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-semibold text-gray-600">Filter Date:</label>
+                        <input type="date" id="dateFilter" onchange="renderApplications()" class="p-1.5 border rounded-lg text-xs">
+                        <button onclick="clearDateFilter()" class="text-xs text-blue-600 hover:underline">Clear</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 border-b text-xs text-gray-500">
+                                <th class="p-3">App ID</th>
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Customer Full Name</th>
+                                <th class="p-3">Agent</th>
+                                <th class="p-3">Assigned Sales</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applicationsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGE PASSWORD MODAL -->
+    <div id="changePasswordModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <h3 class="text-base font-bold text-gray-800 border-b pb-2">🔒 Change Password</h3>
+            <form onsubmit="handleChangePassword(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">New Password</label>
+                    <input type="password" id="newPassInput" class="w-full p-2 border rounded-lg text-sm" required placeholder="Enter new password">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Confirm New Password</label>
+                    <input type="password" id="confirmPassInput" class="w-full p-2 border rounded-lg text-sm" required placeholder="Re-enter new password">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="toggleChangePasswordModal()" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold">Cancel</button>
+                    <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold">Save Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PRINT & PDF PREVIEW WRAPPER -->
+    <div id="pdfExportWrapper" class="hidden fixed inset-0 bg-black/80 z-50 overflow-y-auto p-2 md:p-6 flex flex-col items-center">
+        
+        <div class="w-full max-w-[8.5in] bg-gray-900 text-white p-3 rounded-t-xl flex flex-wrap justify-between items-center gap-2 shadow-lg mb-2 no-print sticky top-0 z-20">
+            <span class="text-xs font-bold tracking-wider">📄 ONLINE CREDIT APPLICATION FORM PREVIEW</span>
+            <div class="flex items-center gap-2">
+                <button onclick="window.print()" class="bg-black border border-gray-700 hover:bg-gray-800 text-white px-3 py-1.5 text-xs font-bold rounded shadow transition">PRINT / SAVE AS PDF</button>
+                <button onclick="generatePDFDownload()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs font-bold rounded shadow transition">DOWNLOAD PDF</button>
+                <button onclick="closePdfView()" class="bg-gray-600 hover:bg-gray-700 text-white px-3.5 py-1.5 text-xs font-bold rounded shadow transition">✕ EXIT</button>
+            </div>
+        </div>
+
+        <div id="pdfExportContainer" class="flex flex-col gap-6 items-center">
+
+            <!-- PAGE 1: APPLICATION FORM -->
+            <div id="pdfDocumentPage1" class="pdf-page shadow-2xl rounded-xl">
+                <div class="text-center mb-4">
+                    <h1 class="text-base font-bold tracking-wide uppercase">APPLICATION FOR CREDIT</h1>
+                    <p class="text-[8px] tracking-tight font-sans">(ALL INFORMATION GIVEN WILL BE TREATED AS STRICTLY CONFIDENTIAL)</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-x-6 text-[9.5px]">
+                    <div class="space-y-1">
+                        <div class="flex"><span class="w-28">Unit Applied for</span>: <span id="pdf_unit" class="pdf-line-input flex-1 font-bold"></span></div>
+                        <div class="flex"><span class="w-28">Condition</span>: <span id="pdf_unitCondition" class="pdf-line-input flex-1 font-semibold"></span></div>
+                        <div class="flex"><span class="w-28">Term</span>: <span id="pdf_term" class="pdf-line-input flex-1"></span></div>
+                        <div class="flex"><span class="w-28">Down Payment</span>: <span id="pdf_downPayment" class="pdf-line-input flex-1"></span></div>
+                        <div class="flex"><span class="w-28">Customer's Name</span>: <span id="pdf_customerName" class="pdf-line-input flex-1 font-bold"></span></div>
+                        <div class="flex"><span class="w-28">Present Address</span>: <span id="pdf_presentAddress" class="pdf-line-input flex-1"></span></div>
+                        <div class="flex"><span class="w-28">Cellphone Number</span>: <span id="pdf_cellphoneNo" class="pdf-line-input flex-1"></span></div>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex"><span class="w-28">Length of Stay</span>: <span id="pdf_lengthOfStay" class="pdf-line-input flex-1"></span></div>
+                        <div class="flex"><span class="w-28">Date of Birth</span>: <span id="pdf_dob" class="pdf-line-input flex-1"></span></div>
+                        <div class="flex"><span class="w-28">Place of Birth</span>: <span id="pdf_pob" class="pdf-line-input flex-1"></span></div>
+                        <div class="flex"><span class="w-28">Spouse Name</span>: <span id="pdf_spouseName" class="pdf-line-input flex-1"></span></div>
+                    </div>
+                </div>
+
+                <div class="my-3 border-b border-gray-400"></div>
+
+                <div class="mt-2">
+                    <p class="font-bold uppercase text-[9px] mb-1">DEPENDENTS:</p>
+                    <table class="w-full pdf-table text-[9px]">
+                        <thead>
+                            <tr class="text-left font-normal">
+                                <th class="p-1 w-1/3">Name</th>
+                                <th class="p-1 w-1/4">Relationship</th>
+                                <th class="p-1 w-12 text-center">Age</th>
+                                <th class="p-1">School</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pdf_dependents_tbody"></tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3">
+                    <p class="font-bold uppercase text-[9px] mb-1">SOURCE OF INCOME:</p>
+                    <div class="grid grid-cols-2 gap-x-6 text-[9px] space-y-1">
+                        <div class="flex"><span class="w-32">Buyer Employer</span>: <span id="pdf_empBuyer" class="pdf-line-input flex-1"></span></div>
+                        <div class="flex"><span class="w-32">Monthly Salary</span>: ₱<span id="pdf_salaryBuyer" class="pdf-line-input flex-1"></span></div>
+                        <div class="flex"><span class="w-32">Spouse Employer</span>: <span id="pdf_empSpouse" class="pdf-line-input flex-1"></span></div>
+                        <div class="flex"><span class="w-32">Monthly Salary</span>: ₱<span id="pdf_salarySpouse" class="pdf-line-input flex-1"></span></div>
+                        <div class="flex font-bold"><span class="w-32">Est. Total Income</span>: ₱<span id="pdf_estTotalIncome" class="pdf-line-input flex-1"></span></div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <p class="font-bold uppercase text-[9px] mb-1">BARANGAY REFERENCES:</p>
+                    <table class="w-full pdf-table text-[9px]">
+                        <thead>
+                            <tr class="text-left font-normal bg-gray-50">
+                                <th class="p-1 w-1/3">Position</th>
+                                <th class="p-1">Full Name</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="p-1 font-semibold">Brgy. Captain</td>
+                                <td class="p-1" id="pdf_ref1_name"></td>
+                            </tr>
+                            <tr>
+                                <td class="p-1 font-semibold">Kagawad 1</td>
+                                <td class="p-1" id="pdf_ref2_name"></td>
+                            </tr>
+                            <tr>
+                                <td class="p-1 font-semibold">Kagawad 2</td>
+                                <td class="p-1" id="pdf_ref3_name"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-12 flex justify-between items-end text-[9px]">
+                    <div class="pt-4 border-t border-black text-center w-48">
+                        <p class="font-bold">CREDIT INVESTIGATOR</p>
+                        <p class="text-[8px]">Field Agent Signature</p>
+                    </div>
+                    <div class="text-center w-56">
+                        <div class="border-b border-black h-8"></div>
+                        <p class="uppercase font-bold text-[8px] mt-1">SIGNATURE OF BUYER</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const initialUsers = [
+            { name: "System Admin", username: "admin", pass: "1234", role: "Admin" }
+        ];
+
+        let users = [...initialUsers];
+        let applications = [];
+        let currentUser = null;
+        let activeExportApp = null;
+
+        function getRadioValue(name) {
+            const radio = document.querySelector(`input[name="${name}"]:checked`);
+            return radio ? radio.value : '';
+        }
+
+        function toggleSpouseFields() {
+            const civilStatus = getRadioValue('f_civilStatus');
+            const spouseDetails = document.getElementById('spouseDetailsContainer');
+            const spouseEmploymentCard = document.getElementById('spouseEmploymentCard');
+            const spouseIncomeContainer = document.getElementById('spouseFieldsContainer');
+
+            if (civilStatus === 'Married') {
+                spouseDetails.classList.remove('hidden');
+                spouseEmploymentCard.classList.remove('hidden');
+                spouseIncomeContainer.classList.remove('hidden');
+            } else {
+                spouseDetails.classList.add('hidden');
+                spouseEmploymentCard.classList.add('hidden');
+                spouseIncomeContainer.classList.add('hidden');
+                
+                document.getElementById('f_spouseName').value = '';
+                document.getElementById('f_spouseDob').value = '';
+                document.getElementById('f_spousePob').value = '';
+                
+                const noneSpouseRadio = document.querySelector('input[name="f_spouseEmploymentType"][value="None"]');
+                if (noneSpouseRadio) noneSpouseRadio.checked = true;
+
+                document.getElementById('f_empSpouse').value = '';
+                document.getElementById('f_salarySpouse').value = '';
+                document.getElementById('f_selfEmpSpouse').value = '';
+                document.getElementById('f_incomeSelfEmpSpouse').value = '';
+            }
+            toggleIncomeFields();
+        }
+
+        function toggleIncomeFields() {
+            const buyerType = getRadioValue('f_buyerEmploymentType');
+            const spouseType = getRadioValue('f_spouseEmploymentType');
+
+            document.getElementById('buyerEmployedFields').classList.toggle('hidden', buyerType !== 'Employed');
+            document.getElementById('buyerSelfEmployedFields').classList.toggle('hidden', buyerType !== 'Self-Employed');
+            document.getElementById('buyerNoneFields').classList.toggle('hidden', buyerType !== 'None');
+
+            document.getElementById('spouseEmployedFields').classList.toggle('hidden', spouseType !== 'Employed');
+            document.getElementById('spouseSelfEmployedFields').classList.toggle('hidden', spouseType !== 'Self-Employed');
+            document.getElementById('spouseNoneFields').classList.toggle('hidden', spouseType !== 'None');
+
+            calculateTotalIncome();
+        }
+
+        function calculateTotalIncome() {
+            const buyerType = getRadioValue('f_buyerEmploymentType');
+            const spouseType = getRadioValue('f_spouseEmploymentType');
+            const civilStatus = getRadioValue('f_civilStatus');
+            let total = 0;
+
+            if (buyerType === 'Employed') {
+                total += (parseFloat(document.getElementById('f_salaryBuyer').value) || 0) + (parseFloat(document.getElementById('f_otherComp').value) || 0);
+            } else if (buyerType === 'Self-Employed') {
+                total += parseFloat(document.getElementById('f_incomeSelfEmpBuyer').value) || 0;
+            }
+
+            if (civilStatus === 'Married') {
+                if (spouseType === 'Employed') {
+                    total += parseFloat(document.getElementById('f_salarySpouse').value) || 0;
+                } else if (spouseType === 'Self-Employed') {
+                    total += parseFloat(document.getElementById('f_incomeSelfEmpSpouse').value) || 0;
+                }
+            }
+
+            document.getElementById('f_estTotalIncome').value = total > 0 ? total : '';
+        }
+
+        function generateChildrenFields() {
+            const countInput = document.getElementById('f_childCount');
+            let count = parseInt(countInput.value) || 0;
+            if (count < 0) count = 0;
+
+            const container = document.getElementById('childrenFieldsContainer');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= count; i++) {
+                const childDiv = document.createElement('div');
+                childDiv.className = "p-3 bg-gray-50 border rounded-lg space-y-2";
+                childDiv.innerHTML = `
+                    <p class="font-bold text-gray-700 text-xs">Dependent ${i}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <input type="text" id="f_depName_${i}" placeholder="Name" class="p-2 border rounded bg-white">
+                        <div class="flex gap-2 p-2 border rounded bg-white text-xs font-semibold">
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="f_depRel_${i}" value="Son" checked> Son</label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="f_depRel_${i}" value="Daughter"> Daughter</label>
+                        </div>
+                        <input type="number" id="f_depAge_${i}" placeholder="Age" class="p-2 border rounded bg-white">
+                        <input type="text" id="f_depSch_${i}" placeholder="School" class="p-2 border rounded bg-white">
+                    </div>
+                `;
+                container.appendChild(childDiv);
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const usernameInput = document.getElementById('loginUsername').value.trim();
+            const passwordInput = document.getElementById('loginPassword').value.trim();
+
+            const foundUser = users.find(u => u.username === usernameInput && u.pass === passwordInput);
+
+            if (foundUser) {
+                currentUser = foundUser;
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainDashboard').classList.remove('hidden');
+                document.getElementById('loginError').classList.add('hidden');
+                setupDashboardView();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('loginForm').reset();
+            document.getElementById('mainDashboard').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function setupDashboardView() {
+            document.getElementById('userBadge').innerText = `Logged in as: ${currentUser.name} (${currentUser.role})`;
+
+            const adminSec = document.getElementById('adminUserSection');
+            const agentCustSec = document.getElementById('agentCustomerAccountSection');
+            const custAppSec = document.getElementById('customerApplicationSection');
+            const appTableSec = document.getElementById('applicationsTableSection');
+
+            adminSec.classList.add('hidden');
+            agentCustSec.classList.add('hidden');
+            custAppSec.classList.add('hidden');
+            appTableSec.classList.remove('hidden');
+
+            if (currentUser.role === 'Admin') {
+                adminSec.classList.remove('hidden');
+                renderUsers();
+                renderApplications();
+            } else if (currentUser.role === 'Agent') {
+                agentCustSec.classList.remove('hidden');
+                renderCustomers();
+                renderApplications();
+            } else if (currentUser.role === 'Sales') {
+                renderApplications();
+            } else if (currentUser.role === 'Customer') {
+                custAppSec.classList.remove('hidden');
+                appTableSec.classList.add('hidden');
+                document.getElementById('f_customerName').value = currentUser.name;
+                
+                generateChildrenFields();
+                toggleSpouseFields();
+            }
+        }
+
+        function copySystemLink() {
+            const currentUrl = window.location.href;
+            navigator.clipboard.writeText(currentUrl).then(() => {
+                alert('System link copied to clipboard! Pwede mo na itong i-paste sa messenger para isend sa customer.');
+            }).catch(() => {
+                alert('Failed to copy. Please copy the URL manually from your browser address bar.');
+            });
+        }
+
+        function toggleChangePasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            modal.classList.toggle('hidden');
+            document.getElementById('newPassInput').value = '';
+            document.getElementById('confirmPassInput').value = '';
+        }
+
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const newPass = document.getElementById('newPassInput').value.trim();
+            const confirmPass = document.getElementById('confirmPassInput').value.trim();
+
+            if (newPass !== confirmPass) {
+                alert('Passwords do not match!');
+                return;
+            }
+
+            if (currentUser.docId && window.updateDoc && window.doc && window.db) {
+                try {
+                    const userRef = window.doc(window.db, "users", currentUser.docId);
+                    await window.updateDoc(userRef, { pass: newPass });
+                    currentUser.pass = newPass;
+                    alert('Password updated in Firebase Database successfully!');
+                    toggleChangePasswordModal();
+                } catch (err) {
+                    console.error("Error updating password in Firebase: ", err);
+                    alert('Failed to update password in online database.');
+                }
+            } else {
+                currentUser.pass = newPass;
+                alert('Password changed successfully for this session!');
+                toggleChangePasswordModal();
+            }
+        }
+
+        function renderCustomers() {
+            const tbody = document.getElementById('customerTableBody');
+            const myCustomers = users.filter(u => u.role === 'Customer' && u.agentOwner === currentUser.name);
+
+            if (myCustomers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-400 italic">No customers registered by you yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = myCustomers.map(c => `
+                <tr class="border-b">
+                    <td class="p-2 font-medium">${c.name}</td>
+                    <td class="p-2 font-mono text-xs">${c.username}</td>
+                    <td class="p-2 text-xs font-semibold text-blue-600">${c.agentOwner}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderApplications() {
+            if (currentUser && currentUser.role === 'Customer') return;
+
+            const tbody = document.getElementById('applicationsTableBody');
+            let visibleApps = applications;
+
+            const filterDate = document.getElementById('dateFilter')?.value;
+            if (filterDate) {
+                visibleApps = visibleApps.filter(a => a.date === filterDate);
+            }
+
+            if (currentUser.role === 'Agent') {
+                visibleApps = visibleApps.filter(a => a.agent === currentUser.name);
+            } else if (currentUser.role === 'Sales') {
+                visibleApps = visibleApps.filter(a => a.sales === currentUser.name);
+            }
+
+            if (visibleApps.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-400 italic">No applications found.</td></tr>`;
+                return;
+            }
+
+            const salesUsers = users.filter(u => u.role === 'Sales');
+
+            tbody.innerHTML = visibleApps.map(app => {
+                let salesColumnContent = `<span class="text-blue-700 font-semibold">${app.sales}</span>`;
+
+                if (currentUser.role === 'Agent') {
+                    if (salesUsers.length === 0) {
+                        salesColumnContent = `<span class="text-gray-400 italic">No Sales users found</span>`;
+                    } else {
+                        const optionsHtml = salesUsers.map(s => 
+                            `<option value="${s.name}" ${app.sales === s.name ? 'selected' : ''}>${s.name}</option>`
+                        ).join('');
+
+                        salesColumnContent = `
+                            <select id="sales_select_${app.id}" class="p-1 border rounded text-xs bg-white focus:ring-1 focus:ring-blue-500">
+                                <option value="">-- Select Sales --</option>
+                                ${optionsHtml}
+                            </select>
+                        `;
+                    }
+                }
+
+                let actionButtons = `
+                    <button onclick="previewPdfForm('${app.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold">
+                        📄 View Form
+                    </button>
+                `;
+
+                if (currentUser.role === 'Agent') {
+                    actionButtons += `
+                        <button onclick="sendAppToSales('${app.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-semibold">
+                            📤 Send to Sales
+                        </button>
+                    `;
+                }
+
+                return `
+                    <tr class="border-b hover:bg-gray-50 text-xs">
+                        <td class="p-3 font-semibold text-blue-600">${app.id}</td>
+                        <td class="p-3">${app.date}</td>
+                        <td class="p-3 font-bold">${app.customerName || app.customer}</td>
+                        <td class="p-3 text-amber-700">${app.agent}</td>
+                        <td class="p-3">${salesColumnContent}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${app.status === 'Submitted to Sales' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${app.status}</span></td>
+                        <td class="p-3 text-center flex justify-center gap-1">
+                            ${actionButtons}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function previewPdfForm(id) {
+            const app = applications.find(a => a.id === id);
+            if (!app) return;
+
+            activeExportApp = app;
+
+            document.getElementById('pdf_unit').innerText = app.unit || '';
+            document.getElementById('pdf_unitCondition').innerText = app.unitCondition || '';
+            document.getElementById('pdf_term').innerText = app.term || '';
+            document.getElementById('pdf_downPayment').innerText = app.downPayment ? `₱${app.downPayment}` : '';
+            document.getElementById('pdf_customerName').innerText = app.customerName || '';
+            document.getElementById('pdf_presentAddress').innerText = app.presentAddress || '';
+            document.getElementById('pdf_cellphoneNo').innerText = app.cellphoneNo || '';
+            document.getElementById('pdf_lengthOfStay').innerText = app.lengthOfStay || '';
+            document.getElementById('pdf_dob').innerText = app.dob || '';
+            document.getElementById('pdf_pob').innerText = app.pob || '';
+            document.getElementById('pdf_spouseName').innerText = app.spouseName || '';
+
+            const pdfDepTbody = document.getElementById('pdf_dependents_tbody');
+            pdfDepTbody.innerHTML = '';
+            if (app.children && app.children.length > 0) {
+                app.children.forEach(c => {
+                    pdfDepTbody.innerHTML += `
+                        <tr>
+                            <td class="h-4 px-1">${c.name || ''}</td>
+                            <td class="px-1">${c.rel || ''}</td>
+                            <td class="px-1 text-center">${c.age || ''}</td>
+                            <td class="px-1">${c.sch || ''}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                pdfDepTbody.innerHTML = `<tr><td colspan="4" class="p-1 text-center text-gray-400">None</td></tr>`;
+            }
+
+            document.getElementById('pdf_empBuyer').innerText = app.empBuyer || 'N/A';
+            document.getElementById('pdf_salaryBuyer').innerText = app.salaryBuyer || '0';
+            document.getElementById('pdf_empSpouse').innerText = app.empSpouse || 'N/A';
+            document.getElementById('pdf_salarySpouse').innerText = app.salarySpouse || '0';
+            document.getElementById('pdf_estTotalIncome').innerText = app.estTotalIncome || '0';
+
+            document.getElementById('pdf_ref1_name').innerText = app.ref1_name || 'N/A';
+            document.getElementById('pdf_ref2_name').innerText = app.ref2_name || 'N/A';
+            document.getElementById('pdf_ref3_name').innerText = app.ref3_name || 'N/A';
+
+            document.getElementById('pdfExportWrapper').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closePdfView() {
+            document.getElementById('pdfExportWrapper').classList.add('hidden');
+            document.body.style.overflow = 'auto'; 
+        }
+
+        function generatePDFDownload() {
+            if(!activeExportApp) return;
+            const element = document.getElementById('pdfExportContainer');
+            
+            html2pdf().set({
+                margin: 0.1,
+                filename: `Credit_Application_${activeExportApp.id}_${(activeExportApp.customerName || activeExportApp.customer).replace(/\s+/g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            }).from(element).save();
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = users.filter(u => u.role !== 'Customer').map(u => `
+                <tr class="border-b text-xs">
+                    <td class="p-2 font-medium">${u.name}</td>
+                    <td class="p-2 font-mono">${u.username}</td>
+                    <td class="p-2 font-semibold text-blue-700">${u.role}</td>
+                    <td class="p-2 text-center text-[10px] text-emerald-600 font-bold">${u.docId ? 'Online Database' : 'System Default'}</td>
+                    <td class="p-2 text-center">
+                        ${u.docId ? `<button onclick="deleteUser('${u.docId}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">Delete</button>` : '<span class="text-gray-400 text-[10px]">Protected</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function clearDateFilter() {
+            document.getElementById('dateFilter').value = '';
+            renderApplications();
+        }
+    </script>
+
+    <!-- FIREBASE SERVICES & REAL-TIME LOGIC SCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            onSnapshot, 
+            doc, 
+            updateDoc,
+            deleteDoc
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        // FIREBASE CONFIGURATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDmDXsGDvAsaR_fEbcWHCaM5uB2vUL7c9w",
+            authDomain: "application-92348.firebaseapp.com",
+            projectId: "application-92348",
+            storageBucket: "application-92348.firebasestorage.app",
+            messagingSenderId: "686767904780",
+            appId: "1:686767904780:web:d6cc00190862906fad3629",
+            measurementId: "G-YVJPF3M064"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        window.db = db;
+        window.auth = auth;
+        window.doc = doc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+
+        // DELETE USER FUNCTION FOR ADMIN
+        window.deleteUser = async function(docId) {
+            if (confirm("Sigurado ka bang gusto mong burahin ang account na ito?")) {
+                try {
+                    await deleteDoc(doc(db, "users", docId));
+                    alert("Account successfully deleted!");
+                } catch (err) {
+                    console.error("Error deleting user: ", err);
+                    alert("Failed to delete account from database.");
+                }
+            }
+        };
+
+        // REAL-TIME SYNC FOR USERS COLLECTION
+        onSnapshot(collection(db, "users"), (snapshot) => {
+            const liveUsers = [...initialUsers]; // Include system default admin
+            snapshot.forEach((docSnap) => {
+                liveUsers.push({ docId: docSnap.id, ...docSnap.data() });
+            });
+            users = liveUsers; 
+
+            if (currentUser) {
+                if (currentUser.role === 'Admin') renderUsers();
+                if (currentUser.role === 'Agent') renderCustomers();
+            }
+        });
+
+        // REAL-TIME SYNC FOR APPLICATIONS COLLECTION
+        onSnapshot(collection(db, "applications"), (snapshot) => {
+            const liveApps = [];
+            snapshot.forEach((docSnap) => {
+                liveApps.push({ docId: docSnap.id, ...docSnap.data() });
+            });
+            applications = liveApps;
+            if (typeof renderApplications === "function") {
+                renderApplications();
+            }
+        });
+
+        // CREATE STAFF USER (ADMIN ROLE) TO FIRESTORE
+        window.createUser = async function(e) {
+            e.preventDefault();
+            const newUser = { 
+                name: document.getElementById('newFullName').value.trim(), 
+                username: document.getElementById('newUsername').value.trim(), 
+                pass: "1234", 
+                role: getRadioValue('newRole') 
+            };
+
+            try {
+                await addDoc(collection(db, "users"), newUser);
+                alert(`Staff account (${newUser.username}) created and saved directly to Online Database!`);
+                document.getElementById('createUserForm').reset();
+            } catch (err) {
+                console.error("Error creating staff user: ", err);
+                alert("Failed to create user in Firebase database.");
+            }
+        };
+
+        // CREATE CUSTOMER ACCOUNT (AGENT ROLE) TO FIRESTORE
+        window.createCustomerAccount = async function(e) {
+            e.preventDefault();
+            const newCust = {
+                name: document.getElementById('custFullName').value.trim(),
+                username: document.getElementById('custUsername').value.trim(),
+                pass: document.getElementById('custPassword').value.trim(),
+                role: "Customer",
+                agentOwner: currentUser.name
+            };
+
+            try {
+                await addDoc(collection(db, "users"), newCust);
+                alert(`Customer Account (${newCust.username}) successfully saved to Online Database!`);
+                document.getElementById('createCustomerForm').reset();
+            } catch (err) {
+                console.error("Error creating customer user: ", err);
+                alert("Failed to create customer account in Firebase database.");
+            }
+        };
+
+        // SUBMIT CUSTOMER APPLICATION TO FIRESTORE
+        window.submitCustomerApplication = async function(e) {
+            e.preventDefault();
+            const today = new Date().toISOString().split('T')[0];
+            const newId = `APP-${Math.floor(1000 + Math.random() * 9000)}`;
+
+            const childCount = parseInt(document.getElementById('f_childCount').value) || 0;
+            const childrenList = [];
+
+            for (let i = 1; i <= childCount; i++) {
+                childrenList.push({
+                    name: document.getElementById(`f_depName_${i}`)?.value || '',
+                    rel: getRadioValue(`f_depRel_${i}`) || 'Son',
+                    age: document.getElementById(`f_depAge_${i}`)?.value || '',
+                    sch: document.getElementById(`f_depSch_${i}`)?.value || ''
+                });
+            }
+
+            const appData = {
+                id: newId,
+                date: today,
+                customer: currentUser ? currentUser.name : "Walk-in Customer",
+                agent: (currentUser && currentUser.agentOwner) ? currentUser.agentOwner : "Unassigned Agent",
+                sales: "Not Assigned",
+                status: "Pending with Agent",
+
+                unit: document.getElementById('f_unit').value,
+                unitCondition: getRadioValue('f_unitCondition'),
+                term: document.getElementById('f_term').value,
+                downPayment: document.getElementById('f_downPayment').value,
+                customerName: document.getElementById('f_customerName').value,
+                presentAddress: document.getElementById('f_presentAddress').value,
+                lengthOfStay: document.getElementById('f_lengthOfStay').value,
+                dob: document.getElementById('f_dob').value,
+                pob: document.getElementById('f_pob').value,
+                civilStatus: getRadioValue('f_civilStatus'),
+                houseOwnership: getRadioValue('f_houseOwnership'),
+                spouseName: document.getElementById('f_spouseName').value,
+
+                childCount: childCount,
+                children: childrenList,
+
+                buyerEmploymentType: getRadioValue('f_buyerEmploymentType'),
+                spouseEmploymentType: getRadioValue('f_spouseEmploymentType'),
+
+                empBuyer: document.getElementById('f_empBuyer').value,
+                salaryBuyer: document.getElementById('f_salaryBuyer').value,
+                empSpouse: document.getElementById('f_empSpouse').value,
+                salarySpouse: document.getElementById('f_salarySpouse').value,
+                estTotalIncome: document.getElementById('f_estTotalIncome').value,
+
+                ref1_name: document.getElementById('f_ref1_name').value,
+                ref2_name: document.getElementById('f_ref2_name').value,
+                ref3_name: document.getElementById('f_ref3_name').value,
+
+                cellphoneNo: document.getElementById('f_cellphoneNo').value || "N/A"
+            };
+
+            try {
+                await addDoc(collection(db, "applications"), appData);
+
+                if (currentUser && currentUser.role === 'Customer') {
+                    // Automatic na buburahin ang Customer account sa Firebase Database
+                    if (currentUser.docId) {
+                        await deleteDoc(doc(db, "users", currentUser.docId));
+                    }
+                    
+                    alert(`Application ${newId} submitted successfully! Ang iyong account ay na-delete na sa system para sa security.`);
+                    document.getElementById('customerSubmitAppForm').reset();
+                    handleLogout();
+                } else {
+                    document.getElementById('customerSubmitAppForm').reset();
+                    alert(`Application ${newId} submitted successfully to Online Database!`);
+                }
+            } catch (error) {
+                console.error("Error saving to Firestore: ", error);
+                alert("Nagkaroon ng error sa pag-save sa online database. Pakisubukan ulit.");
+            }
+        };
+
+        // ASSIGN SALES PERSON IN FIRESTORE
+        window.sendAppToSales = async function(appId) {
+            const salesSelect = document.getElementById(`sales_select_${appId}`);
+            const selectedSales = salesSelect ? salesSelect.value : '';
+
+            if (!selectedSales) {
+                alert('Pumili muna ng Sales Person na pagpapadalahan!');
+                return;
+            }
+
+            const targetApp = applications.find(a => a.id === appId);
+            if (targetApp) {
+                if (currentUser && currentUser.role === 'Agent' && targetApp.agent !== currentUser.name) {
+                    alert('Hindi mo pwedeng i-send ang application na hindi sa iyo!');
+                    return;
+                }
+
+                if (targetApp.docId) {
+                    try {
+                        const appRef = doc(db, "applications", targetApp.docId);
+                        await updateDoc(appRef, {
+                            sales: selectedSales,
+                            status: "Submitted to Sales"
+                        });
+                        alert(`Application ${appId} successfully sent to ${selectedSales}!`);
+                    } catch (err) {
+                        console.error("Error updating document in Firestore: ", err);
+                        alert("Failed to update status in online database.");
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- SERVICE WORKER REGISTRATION SCRIPT FOR PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => console.log('Service Worker Registered Successfully!', reg))
+                    .catch((err) => console.log('Service Worker Registration Failed!', err));
+            });
+        }
+    </script>
+</body>
+</html>
